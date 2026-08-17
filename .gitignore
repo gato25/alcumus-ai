@@ -1,0 +1,18 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.auth/
+
+# live session credentials — never commit
+cookie.json
+cookie.txt
+state.json
+*.egg-info/
+
+# Obsidian per-machine UI state — churns on every pane move.
+# The rest of .obsidian/ (app, appearance, plugins) is worth versioning.
+# (**/ needed: a pattern with a slash is anchored to the repo root otherwise)
+**/.obsidian/workspace.json
+**/.obsidian/workspace-mobile.json
