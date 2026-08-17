@@ -1,0 +1,65 @@
+name: Publish vault
+
+# Builds the Quartz site from vault/ and deploys it to GitHub Pages.
+# Only vault content and site config can change the output, so the build is
+# skipped for pushes that touch neither.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "vault/**"
+      - "site/**"
+      - ".github/workflows/deploy-vault.yml"
+  workflow_dispatch: # lets you rebuild by hand from the Actions tab
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# A newer push should win rather than queue behind an in-flight deploy.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Quartz reads git history to date each note; a shallow clone would
+          # make every page look like it was created at checkout time.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      # --include=optional: npm otherwise skips the platform-native binaries
+      # that sharp and lightningcss need, and the build dies on a missing .node
+      - name: Install dependencies
+        working-directory: site
+        run: npm ci --include=optional
+
+      - name: Build site
+        working-directory: site
+        run: npm run build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

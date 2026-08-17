@@ -16,3 +16,10 @@ state.json
 # (**/ needed: a pattern with a slash is anchored to the repo root otherwise)
 **/.obsidian/workspace.json
 **/.obsidian/workspace-mobile.json
+
+# Quartz site: generated output and dependencies.
+# Note: Quartz globs content with gitignore:true, so never gitignore anything
+# under vault/ — ignored files are silently dropped from the published site.
+site/node_modules/
+site/public/
+site/.quartz-cache/

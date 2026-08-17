@@ -124,6 +124,41 @@ The rules the skill enforces on Claude:
 
 Say "just solve it" and it will, after checking once that you mean it.
 
+## Reading the vault on your phone
+
+The vault is published as a website by [Quartz](https://quartz.jzhao.xyz/),
+living in [site/](site/):
+
+```bash
+cd site
+npm ci --include=optional   # --include=optional matters, see below
+npm run serve               # local preview with hot reload
+npm run build               # one-off build into site/public
+```
+
+Pushing to `main` triggers [the deploy workflow](.github/workflows/deploy-vault.yml),
+which builds and publishes to GitHub Pages. **One-time setup:** in the repo's
+*Settings → Pages*, set **Source** to **GitHub Actions**.
+
+You get working wikilinks, full-text search, the graph view, KaTeX math, and
+your `<details>` collapsibles — in any mobile browser, nothing installed.
+
+### Two traps worth knowing
+
+**Quartz globs content with `gitignore: true`.** Anything ignored by git is
+silently dropped from the published site — no error, just a missing page. So
+Quartz builds straight from `vault/` (`quartz build -d ../vault`) rather than
+copying into `site/content/`: a generated copy would have to be gitignored,
+which would make Quartz see zero files.
+
+**npm skips optional platform binaries.** A plain `npm ci` leaves out the native
+builds `sharp` and `lightningcss` need, and the build dies on
+`Cannot find module '../lightningcss.<platform>.node'`. Always
+`--include=optional`.
+
+`vault/index.md` is the site's landing page — Quartz serves `index.md` at the
+root — and doubles as the vault's home note in Obsidian.
+
 ## Into a markdown vault
 
 ```bash
