@@ -42,7 +42,7 @@ jobs:
       - name: Cache Quartz
         uses: actions/cache@v4
         with:
-          path: .quartz
+          path: .quartz-build
           key: quartz-${{ runner.os }}-${{ hashFiles('site/quartz.mjs') }}
 
       - name: Build site
@@ -52,7 +52,7 @@ jobs:
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .quartz/public
+          path: .quartz-build/public
 
   deploy:
     needs: build

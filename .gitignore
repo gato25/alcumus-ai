@@ -21,4 +21,4 @@ state.json
 # ~140 files and 16MB of framework, and only site/quartz.config.yaml is ours.
 # Note: Quartz globs content with gitignore:true, so never gitignore anything
 # under vault/ — ignored files are silently dropped from the published site.
-.quartz/
+.quartz-build/
