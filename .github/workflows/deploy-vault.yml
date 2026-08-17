@@ -1,8 +1,7 @@
 name: Publish vault
 
 # Builds the Quartz site from vault/ and deploys it to GitHub Pages.
-# Only vault content and site config can change the output, so the build is
-# skipped for pushes that touch neither.
+# Quartz itself is not vendored — site/quartz.mjs clones it at a pinned tag.
 on:
   push:
     branches: [main]
@@ -28,31 +27,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # Quartz reads git history to date each note; a shallow clone would
-          # make every page look like it was created at checkout time.
+          # Quartz dates each note from git history; a shallow clone would make
+          # every page look created at checkout time.
           fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: site/package-lock.json
+          # No cache: there is no lockfile in this repo — the dependency tree
+          # belongs to the Quartz checkout, which is cached wholesale below.
 
-      # --include=optional: npm otherwise skips the platform-native binaries
-      # that sharp and lightningcss need, and the build dies on a missing .node
-      - name: Install dependencies
-        working-directory: site
-        run: npm ci --include=optional
+      # Caches the clone and its node_modules together. The pinned tag lives in
+      # quartz.mjs, so hashing that file invalidates the cache on upgrade.
+      - name: Cache Quartz
+        uses: actions/cache@v4
+        with:
+          path: .quartz
+          key: quartz-${{ runner.os }}-${{ hashFiles('site/quartz.mjs') }}
 
       - name: Build site
-        working-directory: site
-        run: npm run build
+        run: node site/quartz.mjs build
 
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site/public
+          path: .quartz/public
 
   deploy:
     needs: build

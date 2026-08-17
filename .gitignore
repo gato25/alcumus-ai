@@ -17,9 +17,8 @@ state.json
 **/.obsidian/workspace.json
 **/.obsidian/workspace-mobile.json
 
-# Quartz site: generated output and dependencies.
+# Quartz checkout, fetched on demand by site/quartz.mjs. Not vendored: it is
+# ~140 files and 16MB of framework, and only site/quartz.config.yaml is ours.
 # Note: Quartz globs content with gitignore:true, so never gitignore anything
 # under vault/ — ignored files are silently dropped from the published site.
-site/node_modules/
-site/public/
-site/.quartz-cache/
+.quartz/

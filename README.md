@@ -126,35 +126,47 @@ Say "just solve it" and it will, after checking once that you mean it.
 
 ## Reading the vault on your phone
 
-The vault is published as a website by [Quartz](https://quartz.jzhao.xyz/),
-living in [site/](site/):
+The vault is published as a website by [Quartz](https://quartz.jzhao.xyz/).
+**Just push** — [the workflow](.github/workflows/deploy-vault.yml) builds and
+deploys to GitHub Pages on any change under `vault/` or `site/`.
 
-```bash
-cd site
-npm ci --include=optional   # --include=optional matters, see below
-npm run serve               # local preview with hot reload
-npm run build               # one-off build into site/public
-```
-
-Pushing to `main` triggers [the deploy workflow](.github/workflows/deploy-vault.yml),
-which builds and publishes to GitHub Pages. **One-time setup:** in the repo's
-*Settings → Pages*, set **Source** to **GitHub Actions**.
+**One-time setup:** in the repo's *Settings → Pages*, set **Source** to
+**GitHub Actions**.
 
 You get working wikilinks, full-text search, the graph view, KaTeX math, and
 your `<details>` collapsibles — in any mobile browser, nothing installed.
 
-### Two traps worth knowing
+### Quartz is not vendored
 
-**Quartz globs content with `gitignore: true`.** Anything ignored by git is
-silently dropped from the published site — no error, just a missing page. So
-Quartz builds straight from `vault/` (`quartz build -d ../vault`) rather than
-copying into `site/content/`: a generated copy would have to be gitignored,
-which would make Quartz see zero files.
+The framework is ~140 files and 16MB, of which exactly one is ours
+(`site/quartz.config.yaml`). So [site/quartz.mjs](site/quartz.mjs) clones Quartz
+at a pinned tag into a gitignored `.quartz/` instead. **Upgrading is one line** —
+change `QUARTZ_REF`.
 
-**npm skips optional platform binaries.** A plain `npm ci` leaves out the native
-builds `sharp` and `lightningcss` need, and the build dies on
-`Cannot find module '../lightningcss.<platform>.node'`. Always
+Nothing needs installing on your machine. Only if you want to preview before
+pushing:
+
+```bash
+node site/quartz.mjs serve    # first run: a few minutes, ~360MB
+node site/quartz.mjs build    # one-off, into .quartz/public
+```
+
+### Three traps worth knowing
+
+**Quartz globs content with `gitignore: true`.** Anything git ignores is
+silently dropped from the site — no error, just a missing page. So the build
+reads `vault/` directly rather than copying into `site/content/`; a generated
+copy would have to be gitignored, and Quartz would then find zero files and
+publish an empty site.
+
+**npm skips optional platform binaries.** A plain install omits the native
+builds `sharp` and `lightningcss` need, and it dies on
+`Cannot find module '../lightningcss.<platform>.node'`. Hence
 `--include=optional`.
+
+**A half-finished install looks complete.** Interrupt npm and `node_modules/`
+still exists, so a presence check would skip the retry and fail at build time.
+The script writes a `.deps-installed` stamp only after a clean install.
 
 `vault/index.md` is the site's landing page — Quartz serves `index.md` at the
 root — and doubles as the vault's home note in Obsidian.
