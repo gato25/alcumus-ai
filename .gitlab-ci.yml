@@ -1,0 +1,38 @@
+# Builds the vault into a website and publishes it with GitLab Pages.
+#
+# Quartz is not vendored — site/quartz.mjs fetches it at a pinned commit — so
+# this file is thin: one command produces static HTML, and GitLab serves it.
+# The equivalent GitHub Actions workflow lives in .github/workflows/.
+
+stages:
+  - deploy
+
+pages:
+  stage: deploy
+  # Official node image (not -slim/-alpine): it ships git, which the build needs
+  # to fetch Quartz and to date each note from history.
+  image: node:22
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - vault/**/*
+        - site/**/*
+        - .gitlab-ci.yml
+    - if: $CI_PIPELINE_SOURCE == "web" # lets you rebuild by hand from the UI
+  variables:
+    # Quartz dates each page from git history; GitLab's default shallow clone
+    # would make every note look created at checkout time.
+    GIT_DEPTH: 0
+  script:
+    # CI_PAGES_URL is the real published URL — GitLab may assign a unique
+    # domain rather than <namespace>.gitlab.io/<project>, so never hardcode it.
+    # Quartz wants it without the scheme; quartz.mjs strips that anyway.
+    - export QUARTZ_BASE_URL="$CI_PAGES_URL"
+    - node site/quartz.mjs build
+    # GitLab Pages publishes whatever lands in ./public
+    - mv .quartz-build/public public
+  artifacts:
+    paths:
+      - public
+  # No cache on purpose: Quartz's dependency tree is ~360MB, and restoring that
+  # is slower than the ~20s clean install it would save.

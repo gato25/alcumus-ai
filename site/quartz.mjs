@@ -14,7 +14,7 @@
 //   node site/quartz.mjs serve     -> local preview with hot reload
 
 import { execFileSync } from "node:child_process"
-import { cp, mkdir, rm, readFile, writeFile } from "node:fs/promises"
+import { mkdir, rm, readFile, writeFile } from "node:fs/promises"
 import { existsSync } from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
@@ -65,7 +65,19 @@ if ((await readStamp(stamp)) !== QUARTZ_REF) {
 }
 
 // Our config is the only file we own; copy it over Quartz's default.
-await cp(path.join(here, "quartz.config.yaml"), path.join(checkout, "quartz.config.yaml"))
+//
+// QUARTZ_BASE_URL overrides baseUrl so the same vault can be published to more
+// than one host. Quartz bakes baseUrl into absolute links, the sitemap and OG
+// images, and GitHub Pages and GitLab Pages serve at different URLs — GitLab
+// may even assign a unique domain you cannot predict, so its CI passes
+// CI_PAGES_URL through this.
+let config = await readFile(path.join(here, "quartz.config.yaml"), "utf-8")
+if (process.env.QUARTZ_BASE_URL) {
+  const baseUrl = process.env.QUARTZ_BASE_URL.replace(/^\w+:\/\//, "").replace(/\/$/, "")
+  config = config.replace(/^(\s*)baseUrl:.*$/m, `$1baseUrl: "${baseUrl}"`)
+  console.log(`> baseUrl ${baseUrl}`)
+}
+await writeFile(path.join(checkout, "quartz.config.yaml"), config, "utf-8")
 
 // Check a stamp rather than node_modules/: an interrupted install leaves a
 // half-populated directory that would otherwise be treated as complete, and

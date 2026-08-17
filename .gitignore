@@ -22,3 +22,6 @@ state.json
 # Note: Quartz globs content with gitignore:true, so never gitignore anything
 # under vault/ — ignored files are silently dropped from the published site.
 .quartz-build/
+
+# GitLab Pages artifact directory, produced by .gitlab-ci.yml
+/public/
